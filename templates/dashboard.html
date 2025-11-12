@@ -1,0 +1,143 @@
+<!-- templates/dashboard.html -->
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <!-- Quick Stats -->
+    <div class="grid grid-4 mb-4">
+        <div class="card" data-component="solar_panels">
+            <div class="card-header">
+                
+                <i class="fas fa-sun" style="color: #f59e0b;"></i> 
+                <h3 class="card-title">Solar Panels</h3>
+            </div>
+            <div class="health-score" id="solar_health">--%</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="solar_progress" style="width: 0%"></div>
+            </div>
+            <p>RUL: <span class="rul-value" id="solar_rul">-- days</span></p>
+            <p>Confidence: <span id="solar_confidence">--%</span></p>
+            <small class="timestamp" id="solar_timestamp">Last updated: --</small>
+        </div>
+
+        <div class="card" data-component="batteries">
+            <div class="card-header">
+                <h3 class="card-title">Batteries</h3>
+                <i class="fas fa-battery-full" style="color: #10b981;"></i>
+            </div>
+            <div class="health-score" id="battery_health">--%</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="battery_progress" style="width: 0%"></div>
+            </div>
+            <p>RUL: <span class="rul-value" id="battery_rul">-- days</span></p>
+            <p>Confidence: <span id="battery_confidence">--%</span></p>
+            <small class="timestamp" id="battery_timestamp">Last updated: --</small>
+        </div>
+
+        <div class="card" data-component="generators">
+            <div class="card-header">
+                <h3 class="card-title">Generators</h3>
+                <i class="fas fa-industry" style="color: #64748b;"></i>
+            </div>
+            <div class="health-score" id="generator_health">--%</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="generator_progress" style="width: 0%"></div>
+            </div>
+            <p>RUL: <span class="rul-value" id="generator_rul">-- days</span></p>
+            <p>Confidence: <span id="generator_confidence">--%</span></p>
+            <small class="timestamp" id="generator_timestamp">Last updated: --</small>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">System Health</h3>
+                <i class="fas fa-heartbeat" style="color: #ef4444;"></i>
+            </div>
+            <div class="health-score" id="system_health">--%</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="system_progress" style="width: 0%"></div>
+            </div>
+            <p>Active Alerts: <span id="activeAlertsCount">0</span></p>
+            <p>ML Accuracy: <span id="ml_accuracy">--%</span></p>
+            <small>Overall system status</small>
+        </div>
+    </div>
+
+    <!-- Charts and Alerts -->
+    <div class="grid grid-2 gap-4">
+        <!-- Health Trends -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Health Trends</h3>
+                <select id="trendComponent" onchange="loadHealthTrends()">
+                    <option value="solar_panels">Solar Panels</option>
+                    <option value="batteries">Batteries</option>
+                    <option value="generators">Generators</option>
+                </select>
+            </div>
+            <div class="chart-container">
+                <canvas id="healthTrendChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Recent Alerts -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Recent Alerts</h3>
+                <span class="badge badge-danger" id="alertsCount">0</span>
+            </div>
+            <div id="alertsContainer">
+                <div class="alert alert-medium">
+                    <i class="fas fa-check-circle alert-icon"></i>
+                    <div>
+                        <strong>Loading Alerts...</strong>
+                        <p>Fetching real-time alert data</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Maintenance Schedule -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h3 class="card-title">Upcoming Maintenance</h3>
+            <button class="btn btn-primary btn-sm" onclick="refreshAllData()">
+                <i class="fas fa-sync-alt"></i>
+                Refresh All
+            </button>
+        </div>
+        <div class="grid grid-3" id="scheduleContainer">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Loading...</h4>
+                    <span class="priority-badge priority-medium">LOADING</span>
+                </div>
+                <p>Fetching maintenance schedule...</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function refreshAllData() {
+    window.app.loadInitialData();
+    loadHealthTrends();
+}
+
+function loadHealthTrends() {
+    const component = document.getElementById('trendComponent').value;
+    window.app.loadPredictionHistory(component);
+}
+
+// Initialize dashboard when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Load health trends for default component
+    loadHealthTrends();
+});
+</script>
+{% endblock %}

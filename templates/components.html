@@ -1,0 +1,328 @@
+<!-- templates/components.html -->
+{% extends "base.html" %}
+
+{% block title %}Components{% endblock %}
+
+{% block content %}
+<div class="components">
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3 class="card-title">Component Overview</h3>
+            <button class="btn btn-primary" onclick="refreshAllComponents()">
+                <i class="fas fa-sync-alt"></i>
+                Refresh All
+            </button>
+        </div>
+        
+        <div class="grid grid-3">
+            <!-- Solar Panels -->
+            <div class="card" data-component="solar_panels">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-sun" style="color: #f59e0b;"></i>
+                        Solar Panels
+                    </h3>
+                    <span class="badge badge-success">Online</span>
+                </div>
+                <div class="health-score excellent">--%</div>
+                <div class="progress-bar">
+                    <div class="progress-fill excellent" style="width: 0%"></div>
+                </div>
+                <div class="component-details">
+                    <p><strong>RUL:</strong> <span class="rul-value">-- days</span></p>
+                    <p><strong>Efficiency:</strong> <span id="solarEfficiency">--%</span></p>
+                    <p><strong>Last Inspection:</strong> <span>2 weeks ago</span></p>
+                </div>
+                <button class="btn btn-secondary btn-sm mt-2" onclick="viewComponentDetails('solar_panels')">
+                    <i class="fas fa-chart-line"></i>
+                    View Details
+                </button>
+            </div>
+
+            <!-- Batteries -->
+            <div class="card" data-component="batteries">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-battery-full" style="color: #10b981;"></i>
+                        Batteries
+                    </h3>
+                    <span class="badge badge-success">Online</span>
+                </div>
+                <div class="health-score excellent">--%</div>
+                <div class="progress-bar">
+                    <div class="progress-fill excellent" style="width: 0%"></div>
+                </div>
+                <div class="component-details">
+                    <p><strong>RUL:</strong> <span class="rul-value">-- days</span></p>
+                    <p><strong>State of Charge:</strong> <span id="batterySOC">--%</span></p>
+                    <p><strong>Cycle Count:</strong> <span>--</span></p>
+                </div>
+                <button class="btn btn-secondary btn-sm mt-2" onclick="viewComponentDetails('batteries')">
+                    <i class="fas fa-chart-line"></i>
+                    View Details
+                </button>
+            </div>
+
+            <!-- Generators -->
+            <div class="card" data-component="generators">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-industry" style="color: #64748b;"></i>
+                        Generators
+                    </h3>
+                    <span class="badge badge-success">Online</span>
+                </div>
+                <div class="health-score excellent">--%</div>
+                <div class="progress-bar">
+                    <div class="progress-fill excellent" style="width: 0%"></div>
+                </div>
+                <div class="component-details">
+                    <p><strong>RUL:</strong> <span class="rul-value">-- days</span></p>
+                    <p><strong>Operating Hours:</strong> <span>--</span></p>
+                    <p><strong>Last Service:</strong> <span>1 month ago</span></p>
+                </div>
+                <button class="btn btn-secondary btn-sm mt-2" onclick="viewComponentDetails('generators')">
+                    <i class="fas fa-chart-line"></i>
+                    View Details
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Component Details -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Real-time Sensor Data</h3>
+            <button class="btn btn-primary btn-sm" onclick="refreshSensorData()">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+        </div>
+        <div id="sensorDataContainer">
+            <div class="sensor-data-loading">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Loading real sensor data...</p>
+            </div>
+        </div>
+    </div>
+
+        <!-- ML Insights -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">ML Insights</h3>
+                <button class="btn btn-success btn-sm" onclick="retrainCurrentModel()">
+                    <i class="fas fa-brain"></i>
+                    Retrain Model
+                </button>
+            </div>
+            <div id="mlInsightsContainer">
+                <p class="text-muted">Select a component to view ML insights</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentComponent = null;
+
+function refreshAllComponents() {
+    window.app.loadInitialData();
+}
+
+function viewComponentDetails(component) {
+    currentComponent = component;
+    loadSensorData(component);
+    loadMLInsights(component);
+}
+
+async function loadSensorData(component) {
+    try {
+        const response = await fetch('/api/sensor_data');
+        const data = await response.json();
+        
+        const sensorData = data[component];
+        if (sensorData) {
+            document.getElementById('sensorDataContainer').innerHTML = `
+                <div class="sensor-grid">
+                    ${Object.entries(sensorData).map(([key, value]) => `
+                        <div class="sensor-item">
+                            <strong>${key.replace(/_/g, ' ').toUpperCase()}:</strong>
+                            <span>${typeof value === 'number' ? value.toFixed(2) : value}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Failed to load sensor data:', error);
+    }
+}
+
+async function loadMLInsights(component) {
+    try {
+        const response = await fetch(`/api/ml_insights/${component}`);
+        const insights = await response.json();
+        
+        document.getElementById('mlInsightsContainer').innerHTML = `
+            <div class="ml-insights">
+                <h4>Feature Importance</h4>
+                <div class="chart-container">
+                    <canvas id="featureImportanceChart"></canvas>
+                </div>
+                ${insights.model_performance ? `
+                <div class="performance-metrics">
+                    <h4>Model Performance</h4>
+                    <p><strong>R² Score:</strong> ${(insights.model_performance.r2_score * 100).toFixed(1)}%</p>
+                    <p><strong>MAE:</strong> ${insights.model_performance.mae.toFixed(4)}</p>
+                    <p><strong>Training Samples:</strong> ${insights.model_performance.training_samples}</p>
+                </div>
+                ` : ''}
+            </div>
+        `;
+        
+        // Create feature importance chart
+        window.app.chartManager.createFeatureImportanceChart(
+            'featureImportanceChart', 
+            insights.feature_importance
+        );
+    } catch (error) {
+        console.error('Failed to load ML insights:', error);
+    }
+}
+
+function refreshSensorData() {
+    if (currentComponent) {
+        loadSensorData(currentComponent);
+    }
+}
+
+async function retrainCurrentModel() {
+    if (!currentComponent) {
+        alert('Please select a component first');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/retrain_model/${currentComponent}`, {
+            method: 'POST'
+        });
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+            alert('Model retrained successfully!');
+            loadMLInsights(currentComponent);
+        } else {
+            alert('Model retraining failed: ' + result.message);
+        }
+    } catch (error) {
+        console.error('Failed to retrain model:', error);
+        alert('Failed to retrain model');
+    }
+}
+
+async function loadSensorData(component) {
+    try {
+        const response = await fetch('/api/sensor_data');
+        const data = await response.json();
+        
+        const sensorData = data[component];
+        if (sensorData) {
+            // Filter out non-sensor fields and format the data
+            const excludeFields = ['id', 'created_at', 'health_status', 'timestamp'];
+            const sensorFields = Object.entries(sensorData)
+                .filter(([key, value]) => !excludeFields.includes(key) && 
+                       (typeof value === 'number' || typeof value === 'string'))
+                .slice(0, 8); // Show first 8 fields
+            
+            document.getElementById('sensorDataContainer').innerHTML = `
+                <div class="sensor-grid">
+                    ${sensorFields.map(([key, value]) => `
+                        <div class="sensor-item">
+                            <strong>${key.replace(/_/g, ' ').toUpperCase()}:</strong>
+                            <span class="sensor-value">${
+                                typeof value === 'number' ? value.toFixed(2) : value
+                            }</span>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="sensor-timestamp">
+                    <small>Last updated: ${new Date(sensorData.timestamp || Date.now()).toLocaleString()}</small>
+                </div>
+            `;
+        } else {
+            document.getElementById('sensorDataContainer').innerHTML = `
+                <div class="sensor-data-error">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p>No sensor data available for ${component}</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Failed to load real sensor data:', error);
+        document.getElementById('sensorDataContainer').innerHTML = `
+            <div class="sensor-data-error">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>Error loading sensor data: ${error.message}</p>
+            </div>
+        `;
+    }
+}
+</script>
+
+<style>
+.sensor-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+
+.sensor-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem;
+    background: #f8fafc;
+    border-radius: 0.5rem;
+}
+
+.ml-insights h4 {
+    margin-bottom: 1rem;
+    color: var(--dark);
+}
+
+.performance-metrics {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--gray-light);
+}
+
+.performance-metrics p {
+    margin-bottom: 0.5rem;
+}
+
+.badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge-success {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.badge-danger {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+.text-muted {
+    color: var(--gray);
+}
+
+.mt-2 {
+    margin-top: 0.5rem;
+}
+</style>
+{% endblock %}

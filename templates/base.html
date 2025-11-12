@@ -1,0 +1,118 @@
+<!-- templates/base.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uplynx</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/uplynx.png') }}">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='CSS/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='CSS/sidebar.css') }}">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    {% if session.username %}
+    <!-- Main Layout with Sidebar -->
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <!-- Expanded State Content -->
+                <div class="sidebar-header-expanded">
+                    <div class="sidebar-logo-container">
+                        <img src="{{ url_for('static', filename='images/uplynx.png') }}" alt="Uplynx" class="sidebar-logo">
+                        <div class="sidebar-title">
+                            <h2>Uplynx</h2>
+                            <p>Predictive Maintenance</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Collapsed State Icon -->
+                <div class="sidebar-header-collapsed">
+                    <img src="{{ url_for('static', filename='images/uplynx.png') }}" alt="Uplynx" class="sidebar-logo-collapsed">
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="{{ url_for('dashboard') }}" class="nav-item {% if request.endpoint == 'dashboard' %}active{% endif %}">
+                    <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15v4m6-6v6m6-4v4m6-6v6M3 11l6-5 6 5 5.5-5.5"/>
+                    </svg><span>Dashboard</span>
+                </a>
+                <a href="{{ url_for('components') }}" class="nav-item {% if request.endpoint == 'components' %}active{% endif %}">
+                    <i class="fas fa-cogs"></i>
+                    <span>Components</span>
+                </a>
+                <a href="{{ url_for('maintenance') }}" class="nav-item {% if request.endpoint == 'maintenance' %}active{% endif %}">
+                    <i class="fas fa-tools"></i>
+                    <span>Maintenance</span>
+                </a>
+                <a href="{{ url_for('reports') }}" class="nav-item {% if request.endpoint == 'reports' %}active{% endif %}">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Reports</span>
+                </a>
+                <a href="{{ url_for('ai_insights') }}" class="nav-item {% if request.endpoint == 'ai_insights' %}active{% endif %}">
+                <i class="fas fa-robot"></i>
+                <span>AI Insights</span>
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <i class="fas fa-user-circle"></i>
+                    <span>{{ session.username }}</span>
+                </div>
+                <a href="{{ url_for('logout') }}" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Top Bar -->
+            <header class="top-bar">
+                <div class="top-bar-left">
+                    <button class="sidebar-toggle" id="sidebarToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1>{% block title %}Dashboard{% endblock %}</h1>
+                </div>
+                <div class="top-bar-right">
+                    <div class="system-status">
+                        <span class="status-indicator" id="systemStatus">
+                            <i class="fas fa-circle"></i>
+                            System Status
+                        </span>
+                    </div>
+                    <div class="current-time" id="currentTime"></div>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <main class="content-area">
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+    {% else %}
+        {% block login_content %}{% endblock %}
+    {% endif %}
+
+    <!-- JavaScript -->
+    <script src="{{ url_for('static', filename='JS/sidebar.js') }}"></script>
+    <script src="{{ url_for('static', filename='JS/charts.js') }}"></script>
+    <script src="{{ url_for('static', filename='JS/script.js') }}"></script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,328 @@
+<!-- templates/maintenance.html -->
+{% extends "base.html" %}
+
+{% block title %}Maintenance{% endblock %}
+
+{% block content %}
+<div class="maintenance">
+    <!-- Active Alerts -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3 class="card-title">Active Alerts</h3>
+            <span class="badge badge-danger" id="activeAlertsCount">0 Critical</span>
+        </div>
+        <div id="activeAlertsContainer">
+            <!-- Alerts will be populated by JavaScript -->
+        </div>
+    </div>
+
+    <div class="grid grid-2 gap-4">
+        <!-- Maintenance Schedule -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Maintenance Schedule</h3>
+                <button class="btn btn-primary btn-sm" onclick="refreshSchedule()">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+            <div id="maintenanceSchedule">
+                <!-- Schedule will be populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Maintenance History -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Maintenance History</h3>
+            </div>
+            <div class="maintenance-history">
+                <div class="history-item">
+                    <div class="history-date">2024-01-15</div>
+                    <div class="history-details">
+                        <strong>Battery System Check</strong>
+                        <p>Completed - All parameters normal</p>
+                    </div>
+                </div>
+                <div class="history-item">
+                    <div class="history-date">2024-01-08</div>
+                    <div class="history-details">
+                        <strong>Solar Panel Cleaning</strong>
+                        <p>Completed - Efficiency improved by 5%</p>
+                    </div>
+                </div>
+                <div class="history-item">
+                    <div class="history-date">2024-01-01</div>
+                    <div class="history-details">
+                        <strong>Generator Service</strong>
+                        <p>Completed - Oil change and filter replacement</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Predictive Analytics -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h3 class="card-title">Predictive Analytics</h3>
+        </div>
+        <div class="grid grid-3" id="predictiveAnalytics">
+            <!-- Predictive analytics cards will be populated by JavaScript -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function refreshSchedule() {
+    window.app.loadInitialData();
+}
+
+// Initialize maintenance page
+document.addEventListener('DOMContentLoaded', function() {
+    loadMaintenanceData();
+});
+
+async function loadMaintenanceData() {
+    try {
+        const response = await fetch('/api/health_status');
+        const data = await response.json();
+        
+        updateMaintenanceSchedule(data.schedule);
+        updateActiveAlerts(data.alerts);
+        updatePredictiveAnalytics(data.predictions);
+    } catch (error) {
+        console.error('Failed to load maintenance data:', error);
+    }
+}
+
+function updateMaintenanceSchedule(schedule) {
+    const container = document.getElementById('maintenanceSchedule');
+    
+    if (schedule.length === 0) {
+        container.innerHTML = '<p class="text-muted">No maintenance scheduled</p>';
+        return;
+    }
+    
+    container.innerHTML = schedule.map(item => `
+        <div class="schedule-item ${item.priority.toLowerCase()}">
+            <div class="schedule-header">
+                <strong>${item.component.replace('_', ' ').toUpperCase()}</strong>
+                <span class="priority-badge priority-${item.priority.toLowerCase()}">
+                    ${item.priority}
+                </span>
+            </div>
+            <div class="schedule-details">
+                <p><i class="fas fa-calendar"></i> ${item.scheduled_date}</p>
+                <p><i class="fas fa-heartbeat"></i> Health: ${item.health_score}%</p>
+                <p><i class="fas fa-clock"></i> RUL: ${item.rul} days</p>
+            </div>
+            <div class="schedule-actions">
+                <button class="btn btn-success btn-sm" onclick="completeMaintenance('${item.component}')">
+                    <i class="fas fa-check"></i>
+                    Complete
+                </button>
+                <button class="btn btn-secondary btn-sm" onclick="rescheduleMaintenance('${item.component}')">
+                    <i class="fas fa-calendar-alt"></i>
+                    Reschedule
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function updateActiveAlerts(alerts) {
+    const container = document.getElementById('activeAlertsContainer');
+    const countElement = document.getElementById('activeAlertsCount');
+    
+    const criticalAlerts = alerts.filter(alert => alert.severity === 'critical');
+    countElement.textContent = `${criticalAlerts.length} Critical`;
+    
+    if (alerts.length === 0) {
+        container.innerHTML = `
+            <div class="alert alert-medium">
+                <i class="fas fa-check-circle alert-icon"></i>
+                <div>
+                    <strong>No Active Alerts</strong>
+                    <p>All systems are operating normally</p>
+                </div>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = alerts.map(alert => `
+        <div class="alert alert-${alert.severity}">
+            <i class="fas fa-${window.app.getAlertIcon(alert.severity)} alert-icon"></i>
+            <div>
+                <strong>${alert.component.replace('_', ' ').toUpperCase()}</strong>
+                <p>${alert.message}</p>
+                <small>${alert.action_required}</small>
+                <div class="alert-actions">
+                    <button class="btn btn-sm" onclick="acknowledgeAlert('${alert.id}')">
+                        <i class="fas fa-check"></i>
+                        Acknowledge
+                    </button>
+                    <button class="btn btn-sm" onclick="resolveAlert('${alert.id}')">
+                        <i class="fas fa-wrench"></i>
+                        Resolve
+                    </button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function updatePredictiveAnalytics(predictions) {
+    const container = document.getElementById('predictiveAnalytics');
+    
+    container.innerHTML = Object.entries(predictions).map(([component, data]) => `
+        <div class="card">
+            <div class="card-header">
+                <h4 class="card-title">${component.replace('_', ' ').toUpperCase()}</h4>
+            </div>
+            <div class="health-score ${data.health_score >= 80 ? 'excellent' : data.health_score >= 60 ? 'good' : 'poor'}">
+                ${data.health_score}%
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill ${data.health_score >= 80 ? 'excellent' : data.health_score >= 60 ? 'good' : 'poor'}" 
+                     style="width: ${data.health_score}%"></div>
+            </div>
+            <div class="analytics-details">
+                <p><strong>RUL:</strong> ${data.rul} days</p>
+                <p><strong>Confidence:</strong> ${(data.confidence * 100).toFixed(1)}%</p>
+                <p><strong>Last Updated:</strong> ${new Date(data.timestamp).toLocaleTimeString()}</p>
+            </div>
+        </div>
+    `).join('');
+}
+
+function completeMaintenance(component) {
+    if (confirm(`Mark maintenance for ${component} as completed?`)) {
+        alert('Maintenance marked as completed');
+        refreshSchedule();
+    }
+}
+
+function rescheduleMaintenance(component) {
+    const newDate = prompt(`Enter new date for ${component} maintenance (YYYY-MM-DD):`);
+    if (newDate) {
+        alert(`Maintenance rescheduled to ${newDate}`);
+        refreshSchedule();
+    }
+}
+
+function acknowledgeAlert(alertId) {
+    alert(`Alert ${alertId} acknowledged`);
+    // In a real application, you would make an API call here
+}
+
+function resolveAlert(alertId) {
+    if (confirm('Mark this alert as resolved?')) {
+        alert(`Alert ${alertId} resolved`);
+        // In a real application, you would make an API call here
+    }
+}
+</script>
+
+<style>
+.schedule-item {
+    padding: 1rem;
+    border: 1px solid var(--gray-light);
+    border-radius: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.schedule-item.critical {
+    border-left: 4px solid var(--danger);
+}
+
+.schedule-item.high {
+    border-left: 4px solid var(--warning);
+}
+
+.schedule-item.medium {
+    border-left: 4px solid var(--primary);
+}
+
+.schedule-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.priority-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.priority-critical {
+    background: #fef2f2;
+    color: var(--danger);
+}
+
+.priority-high {
+    background: #fffbeb;
+    color: #b45309;
+}
+
+.priority-medium {
+    background: #eff6ff;
+    color: var(--primary);
+}
+
+.schedule-details p {
+    margin-bottom: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.schedule-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.alert-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.alert-actions .btn {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.8rem;
+}
+
+.history-item {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--gray-light);
+}
+
+.history-item:last-child {
+    border-bottom: none;
+}
+
+.history-date {
+    font-weight: 600;
+    color: var(--dark);
+    min-width: 100px;
+}
+
+.analytics-details p {
+    margin-bottom: 0.25rem;
+}
+
+.btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+}
+</style>
+{% endblock %}

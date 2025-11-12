@@ -1,0 +1,801 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Uplynx — Predictive Maintenance</title>
+    <link rel="shortcut icon" href="{{ url_for('static', filename='images/uplynx.png') }}" type="image/x-icon">
+
+    <meta name="description" content="Uplynx — AI-powered predictive maintenance and uptime intelligence." />
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+      .gradient-bg {
+        background: linear-gradient(135deg, #3bcfe0 0%, #05e4d2 100%);
+      }
+      .card-hover {
+        transition: all 0.3s ease;
+      }
+      .card-hover:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+      }
+      /* Modal styles */
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+      }
+      .modal-content {
+        background-color: rgb(255, 255, 255);
+        margin: 10% auto;
+        padding: 0;
+        border-radius: 1rem;
+        width: 90%;
+        max-width: 400px;
+        box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+        animation: modalSlideIn 0.3s ease-out;
+      }
+      @keyframes modalSlideIn {
+        from {
+          opacity: 0;
+          transform: translateY(-50px) scale(0.9);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+      .notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1001;
+        padding: 1rem 1.5rem;
+        border-radius: 0.75rem;
+        color: white;
+        font-weight: 500;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        animation: slideInRight 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        max-width: 400px;
+      }
+      .notification.success {
+        background: linear-gradient(135deg, #10b981, #059669);
+      }
+      .notification.error {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+      }
+      @keyframes slideInRight {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+    </style>
+  </head>
+  
+  <body class="min-h-screen bg-gradient-to-b from-white to-gray-50 text-gray-900 font-sans">
+    
+    <!-- Navigation Header -->
+    <header class="max-w-6xl mx-auto px-6 py-8 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-lg flex items-center justify-center">
+          <img src="{{ url_for('static', filename='images/uplynx.png') }}" alt="Uplynx">
+        </div>
+        <div>
+          <span class="font-bold text-lg leading-tight">Uplynx</span>
+          <div class="text-xs text-gray-500">Predictive Maintenance • Uptime Intelligence</div>
+        </div>
+      </div>
+      
+      <nav class="hidden md:flex gap-6 items-center text-sm text-gray-600">
+        <a href="#features" class="hover:text-gray-900 transition-colors">Features</a>
+        <a href="#demo" class="hover:text-gray-900 transition-colors">Live Demo</a>
+        <a href="#contact" class="hover:text-gray-900 transition-colors">Contact</a>
+        
+        <!-- Dynamic Auth Button -->
+        {% if session.username %}
+          <div class="flex items-center gap-4">
+            <span class="text-gray-700">
+              <i class="fas fa-user-circle mr-1"></i>
+              {{ session.username }}
+            </span>
+            <a href="{{ url_for('logout') }}" class="px-4 py-2 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors">
+              <i class="fas fa-sign-out-alt mr-2"></i>Logout
+            </a>
+            <a href="{{ url_for('dashboard') }}" class="px-4 py-2 rounded-md bg-indigo-600 text-white shadow-sm hover:bg-indigo-700 transition-colors">
+              <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+            </a>
+          </div>
+        {% else %}
+          <button onclick="openLoginModal()" class="ml-2 px-4 py-2 rounded-md bg-indigo-600 text-white shadow-sm hover:bg-indigo-700 transition-colors">
+            <i class="fas fa-sign-in-alt mr-2"></i>Login
+          </button>
+        {% endif %}
+      </nav>
+      
+      <!-- Mobile menu button -->
+      <button class="md:hidden p-2 rounded-md bg-gray-100" onclick="toggleMobileMenu()">
+        <i class="fas fa-bars"></i>
+      </button>
+    </header>
+
+    <!-- Mobile Menu -->
+    <div id="mobileMenu" class="md:hidden hidden bg-white border-t border-gray-200 px-6 py-4">
+      <div class="flex flex-col gap-4">
+        <a href="#features" class="hover:text-gray-900 transition-colors">Features</a>
+        <a href="#demo" class="hover:text-gray-900 transition-colors">Live Demo</a>
+        <a href="#contact" class="hover:text-gray-900 transition-colors">Contact</a>
+        {% if session.username %}
+          <div class="border-t border-gray-200 pt-4">
+            <div class="text-gray-700 mb-2">
+              <i class="fas fa-user-circle mr-2"></i>
+              {{ session.username }}
+            </div>
+            <a href="{{ url_for('dashboard') }}" class="block px-4 py-2 rounded-md bg-indigo-600 text-white text-center mb-2">
+              <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+            </a>
+            <a href="{{ url_for('logout') }}" class="block px-4 py-2 rounded-md bg-gray-100 text-gray-700 text-center">
+              <i class="fas fa-sign-out-alt mr-2"></i>Logout
+            </a>
+          </div>
+        {% else %}
+          <button onclick="openLoginModal()" class="px-4 py-2 rounded-md bg-indigo-600 text-white text-center">
+            <i class="fas fa-sign-in-alt mr-2"></i>Login
+          </button>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+      <div class="modal-content">
+        <div class="p-8">
+          <!-- Modal Header -->
+          <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 gradient-bg rounded-lg flex items-center justify-center">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+                <path d="M20 17.58A4.42 4.42 0 0 0 15.58 13H8.5A3.5 3.5 0 0 1 8.5 6H9a5 5 0 0 1 10 0c0 .28-.02.55-.06.82A4.5 4.5 0 0 1 20 17.58z" fill="white"/>
+                </svg>
+              </div>
+              <h3 class="text-xl font-bold text-gray-900">Welcome to Uplynx</h3>
+            </div>
+            <button onclick="closeLoginModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+              <i class="fas fa-times text-xl"></i>
+            </button>
+          </div>
+
+          <!-- Login Form -->
+          <form id="loginForm" class="space-y-4">
+            <div>
+              <label for="username" class="block text-sm font-medium text-gray-700 mb-2">
+                <i class="fas fa-user mr-2"></i>Username
+              </label>
+              <input 
+                type="text" 
+                id="username" 
+                name="username"
+                required
+                class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                placeholder="Enter your username"
+              >
+            </div>
+
+            <div>
+              <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
+                <i class="fas fa-lock mr-2"></i>Password
+              </label>
+              <input 
+                type="password" 
+                id="password" 
+                name="password"
+                required
+                class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                placeholder="Enter your password"
+              >
+            </div>
+
+            <div class="flex items-center justify-between text-sm">
+              <div class="flex items-center">
+                <input type="checkbox" id="remember" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                <label for="remember" class="ml-2 text-gray-600">Remember me</label>
+              </div>
+              <a href="#" class="text-indigo-600 hover:text-indigo-500">Forgot password?</a>
+            </div>
+
+            <button 
+              type="submit"
+              class="w-full py-3 px-4 gradient-bg text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
+            >
+              <i class="fas fa-sign-in-alt"></i>
+              Sign In
+            </button>
+          </form>
+
+          <!-- Demo Credentials -->
+          <div class="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <h4 class="font-semibold text-blue-900 mb-2 flex items-center gap-2">
+              <i class="fas fa-info-circle"></i>
+              Demo Credentials
+            </h4>
+            <div class="text-sm text-blue-700 space-y-1">
+              <div><strong>Admin:</strong> admin / password123</div>
+              <div><strong>Operator:</strong> operator / op123</div>
+            </div>
+          </div>
+
+          <!-- Loading Spinner (hidden by default) -->
+          <div id="loginLoading" class="hidden mt-4 text-center">
+            <div class="inline-flex items-center gap-2 text-gray-600">
+              <div class="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+              <span>Signing in...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <main class="max-w-6xl mx-auto px-6 grid">
+      
+      <!-- Hero Section -->
+      <section class="grid md:grid-cols-2 gap-12 items-center">
+        <div>
+          <h1 class="text-4xl md:text-4xl font-extrabold leading-tight bg-gradient-to-r from-indigo-600 to-cyan-500 bg-clip-text text-transparent">
+            AI-Powered Predictive Maintenance That Keeps Your Operations Humming Smoothly.
+          </h1>
+          <p class="mt-6 text-gray-600 text-lg max-w-xl">
+            Real-time ML predictions, actionable alerts, and automated maintenance workflows — all designed to reduce downtime, extend equipment life, and increase ROI.
+          </p>
+
+          <div class="mt-8 flex gap-4 flex-wrap">
+            {% if session.username %}
+              <a href="{{ url_for('dashboard') }}" class="inline-flex items-center gap-3 px-6 py-4 rounded-lg gradient-bg text-white font-semibold shadow-lg hover:shadow-xl transition-all">
+                <i class="fas fa-tachometer-alt"></i>
+                Go to Dashboard
+              </a>
+            {% else %}
+              <button onclick="openLoginModal()" class="inline-flex items-center gap-3 px-6 py-4 rounded-lg gradient-bg text-white font-semibold shadow-lg hover:shadow-xl transition-all">
+                <i class="fas fa-rocket"></i>
+                Get Started — Free Trial
+              </button>
+            {% endif %}
+            
+            <a href="#demo" class="inline-flex items-center gap-3 px-6 py-4 rounded-lg border-2 border-gray-200 text-gray-700 font-medium hover:border-indigo-300 hover:bg-indigo-50 transition-all">
+              <i class="fas fa-play-circle"></i>
+              View Live Demo
+            </a>
+          </div>
+
+          <div class="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-md">
+            <div class="flex items-center gap-4 p-4 bg-white rounded-xl shadow-sm border border-gray-100">
+              <div class="p-3 bg-green-100 rounded-lg text-green-600">
+                <i class="fas fa-chart-line"></i>
+              </div>
+              <div>
+                <div class="font-semibold text-gray-900">Reduce Downtime</div>
+                <div class="text-sm text-gray-600">Predict failures before they happen</div>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-4 p-4 bg-white rounded-xl shadow-sm border border-gray-100">
+              <div class="p-3 bg-blue-100 rounded-lg text-blue-600">
+                <i class="fas fa-bell"></i>
+              </div>
+              <div>
+                <div class="font-semibold text-gray-900">Smart Alerts</div>
+                <div class="text-sm text-gray-600">Prioritized incidents and guided fixes</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live System Status Card -->
+        <div class="bg-white p-8 rounded-2xl shadow-2xl border border-gray-100 card-hover">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <div class="text-sm text-gray-500 font-medium">Live System Health</div>
+              <div class="text-2xl font-bold text-gray-900">AI-Powered Monitoring</div>
+            </div>
+            <div class="flex items-center gap-2 px-3 py-1 bg-green-100 rounded-full">
+              <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <span class="text-sm font-medium text-green-700">Systems Normal</span>
+            </div>
+          </div>
+
+          <!-- Health Progress -->
+          <div class="space-y-4">
+            <div>
+              <div class="flex justify-between text-sm text-gray-600 mb-2">
+                <span>Overall System Health</span>
+                <span class="font-semibold">94%</span>
+              </div>
+              <div class="w-full bg-gray-200 rounded-full h-3">
+                <div class="h-3 rounded-full gradient-bg" style="width: 94%"></div>
+              </div>
+            </div>
+            
+            <div class="grid grid-cols-3 gap-4 text-center">
+              <div class="p-3 bg-blue-50 rounded-lg">
+                <div class="text-lg font-bold text-blue-600">1,420</div>
+                <div class="text-xs text-gray-600">MTBF (hrs)</div>
+              </div>
+              <div class="p-3 bg-orange-50 rounded-lg">
+                <div class="text-lg font-bold text-orange-600">8</div>
+                <div class="text-xs text-gray-600">Active Alerts</div>
+              </div>
+              <div class="p-3 bg-green-50 rounded-lg">
+                <div class="text-lg font-bold text-green-600">12</div>
+                <div class="text-xs text-gray-600">Actions</div>
+              </div>
+            </div>
+          </div>
+
+          {% if not session.username %}
+          <div class="mt-6 pt-6 border-t border-gray-200">
+            <button onclick="openLoginModal()" class="w-full py-3 text-center text-indigo-600 font-semibold border-2 border-indigo-200 rounded-lg hover:bg-indigo-50 transition-colors">
+              <i class="fas fa-lock-open mr-2"></i>
+              Sign in to view real data
+            </button>
+          </div>
+          {% endif %}
+        </div>
+      </section>
+
+      <!-- Features Section -->
+      <section id="features" class="py-16">
+        <div class="text-center mb-12">
+          <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Enterprise-Grade Predictive Maintenance</h2>
+          <p class="text-xl text-gray-600 max-w-2xl mx-auto">From sensors to service tickets — a single source of truth for your maintenance team.</p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8">
+          <!-- Feature 1 -->
+          <div class="bg-white p-8 rounded-2xl shadow-lg border border-gray-100 card-hover">
+            <div class="w-12 h-12 gradient-bg rounded-lg flex items-center justify-center mb-6">
+              <i class="fas fa-satellite-dish text-white text-xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 mb-4">Real-time Monitoring</h3>
+            <p class="text-gray-600 leading-relaxed">
+              Stream and normalize sensor data from any equipment with lightweight agents. Monitor solar panels, batteries, and generators in real-time.
+            </p>
+            <ul class="mt-4 space-y-2">
+              <li class="flex items-center gap-2 text-sm text-gray-600">
+                <i class="fas fa-check text-green-500"></i>
+                Live sensor data streaming
+              </li>
+              <li class="flex items-center gap-2 text-sm text-gray-600">
+                <i class="fas fa-check text-green-500"></i>
+                Multi-component support
+              </li>
+              <li class="flex items-center gap-2 text-sm text-gray-600">
+                <i class="fas fa-check text-green-500"></i>
+                Real-time dashboards
+              </li>
+            </ul>
+          </div>
+
+          <!-- Feature 2 -->
+          <div class="bg-white p-8 rounded-2xl shadow-lg border border-gray-100 card-hover">
+            <div class="w-12 h-12 gradient-bg rounded-lg flex items-center justify-center mb-6">
+              <i class="fas fa-brain text-white text-xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 mb-4">AI-Driven Predictions</h3>
+            <p class="text-gray-600 leading-relaxed">
+              Machine learning models tuned for your equipment to surface likely faults days or weeks ahead with health scores and RUL predictions.
+            </p>
+            <ul class="mt-4 space-y-2">
+              <li class="flex items-center gap-2 text-sm text-gray-600">
+                <i class="fas fa-check text-green-500"></i>
+                Health score predictions
+              </li>
+              <li class="flex items-center gap-2 text-sm text-gray-600">
+                <i class="fas fa-check text-green-500"></i>
+                Remaining useful life
+              </li>
+              <li class="flex items-center gap-2 text-sm text-gray-600">
+                <i class="fas fa-check text-green-500"></i>
+                Smart anomaly detection
+              </li>
+            </ul>
+          </div>
+
+          <!-- Feature 3 -->
+          <div class="bg-white p-8 rounded-2xl shadow-lg border border-gray-100 card-hover">
+            <div class="w-12 h-12 gradient-bg rounded-lg flex items-center justify-center mb-6">
+              <i class="fas fa-cogs text-white text-xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 mb-4">Automated Workflows</h3>
+            <p class="text-gray-600 leading-relaxed">
+              Auto-generate work orders, schedule technicians, and track completion without manual steps. Intelligent maintenance scheduling.
+            </p>
+            <ul class="mt-4 space-y-2">
+              <li class="flex items-center gap-2 text-sm text-gray-600">
+                <i class="fas fa-check text-green-500"></i>
+                Automated scheduling
+              </li>
+              <li class="flex items-center gap-2 text-sm text-gray-600">
+                <i class="fas fa-check text-green-500"></i>
+                Priority management
+              </li>
+              <li class="flex items-center gap-2 text-sm text-gray-600">
+                <i class="fas fa-check text-green-500"></i>
+                Progress tracking
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- Live Demo Section -->
+      <section id="demo" class="py-16 bg-gradient-to-r from-indigo-50 to-cyan-50 rounded-3xl p-8">
+        <div class="text-center mb-12">
+          <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">See Uplynx in Action</h2>
+          <p class="text-xl text-gray-600 max-w-2xl mx-auto">Experience our AI-powered predictive maintenance platform with live demo data.</p>
+        </div>
+
+        <div class="grid lg:grid-cols-2 gap-8 items-center">
+          <div>
+            <h3 class="text-2xl font-bold text-gray-900 mb-6">Live Component Monitoring</h3>
+            <div class="space-y-6">
+              <div class="flex items-center justify-between p-4 bg-white rounded-xl shadow-sm">
+                <div class="flex items-center gap-4">
+                  <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-sun text-orange-500"></i>
+                  </div>
+                  <div>
+                    <div class="font-semibold text-gray-900">Solar Panels</div>
+                    <div class="text-sm text-gray-600">Health monitoring</div>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <div class="font-bold text-green-600">92%</div>
+                  <div class="text-xs text-gray-500">Excellent</div>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between p-4 bg-white rounded-xl shadow-sm">
+                <div class="flex items-center gap-4">
+                  <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-battery-full text-green-500"></i>
+                  </div>
+                  <div>
+                    <div class="font-semibold text-gray-900">Battery Systems</div>
+                    <div class="text-sm text-gray-600">Power storage</div>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <div class="font-bold text-green-600">88%</div>
+                  <div class="text-xs text-gray-500">Good</div>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between p-4 bg-white rounded-xl shadow-sm">
+                <div class="flex items-center gap-4">
+                  <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-industry text-blue-500"></i>
+                  </div>
+                  <div>
+                    <div class="font-semibold text-gray-900">Generators</div>
+                    <div class="text-sm text-gray-600">Backup power</div>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <div class="font-bold text-yellow-600">76%</div>
+                  <div class="text-xs text-gray-500">Monitor</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white p-8 rounded-2xl shadow-lg">
+            <h4 class="text-lg font-bold text-gray-900 mb-4">AI Insights Generated</h4>
+            <div class="space-y-4">
+              <div class="p-4 bg-green-50 rounded-lg border border-green-200">
+                <div class="flex items-center gap-3">
+                  <i class="fas fa-check-circle text-green-500"></i>
+                  <span class="font-semibold text-green-800">All Systems Operational</span>
+                </div>
+                <p class="text-sm text-green-700 mt-2">No critical alerts. System performing within optimal parameters.</p>
+              </div>
+
+              <div class="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <div class="flex items-center gap-3">
+                  <i class="fas fa-lightbulb text-blue-500"></i>
+                  <span class="font-semibold text-blue-800">Predictive Insight</span>
+                </div>
+                <p class="text-sm text-blue-700 mt-2">Generator maintenance recommended in 14 days based on current trends.</p>
+              </div>
+
+              <div class="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                <div class="flex items-center gap-3">
+                  <i class="fas fa-chart-line text-yellow-500"></i>
+                  <span class="font-semibold text-yellow-800">Performance Trend</span>
+                </div>
+                <p class="text-sm text-yellow-700 mt-2">Battery efficiency shows 2% monthly degradation - within expected range.</p>
+              </div>
+            </div>
+            
+            {% if not session.username %}
+            <div class="mt-6 text-center">
+              <button onclick="openLoginModal()" class="inline-flex items-center gap-2 px-6 py-3 rounded-lg gradient-bg text-white font-semibold shadow-lg hover:shadow-xl transition-all">
+                <i class="fas fa-play-circle"></i>
+                Launch Full Demo
+              </button>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </section>
+
+      <!-- Contact Section -->
+      <section id="contact" class="py-16">
+        <div class="bg-white rounded-3xl shadow-xl p-8 md:p-12">
+          <div class="grid lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-6">Ready to Reduce Downtime?</h2>
+              <p class="text-xl text-gray-600 mb-8">
+                Get a personalized demo and pilot plan for your equipment fleet. See how Uplynx can transform your maintenance operations.
+              </p>
+              
+              <div class="space-y-4">
+                <div class="flex items-center gap-4">
+                  <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-chart-line text-indigo-600"></i>
+                  </div>
+                  <div>
+                    <div class="font-semibold text-gray-900">30% Average</div>
+                    <div class="text-sm text-gray-600">Reduction in maintenance costs</div>
+                  </div>
+                </div>
+                
+                <div class="flex items-center gap-4">
+                  <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-clock text-green-600"></i>
+                  </div>
+                  <div>
+                    <div class="font-semibold text-gray-900">45% Less</div>
+                    <div class="text-sm text-gray-600">Unexpected downtime</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-gray-50 rounded-2xl p-8">
+              <h3 class="text-2xl font-bold text-gray-900 mb-6">Request a Demo</h3>
+              <form id="demoForm" class="space-y-4">
+                <div class="grid sm:grid-cols-2 gap-4">
+                  <input type="text" placeholder="Your Name" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent" required>
+                  <input type="email" placeholder="Work Email" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent" required>
+                </div>
+                <input type="text" placeholder="Company Name" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent" required>
+                <select class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                  <option>Select Industry</option>
+                  <option>Manufacturing</option>
+                  <option>Energy & Utilities</option>
+                  <option>Transportation</option>
+                  <option>Healthcare</option>
+                  <option>Other</option>
+                </select>
+                <textarea placeholder="Tell us about your maintenance challenges..." rows="4" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"></textarea>
+                <button type="submit" class="w-full px-6 py-4 rounded-lg gradient-bg text-white font-semibold shadow-lg hover:shadow-xl transition-all">
+                  <i class="fas fa-paper-plane mr-2"></i>
+                  Request Personalized Demo
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Footer -->
+      <footer class="py-12 border-t border-gray-200">
+        <div class="max-w-6xl mx-auto px-6">
+          <div class="grid md:grid-cols-4 gap-8 mb-8">
+            <div>
+              <div class="flex items-center gap-3 mb-4">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center">
+                <img src="{{ url_for('static', filename='images/uplynx.png') }}" alt="Uplynx">
+                </div>
+                <span class="font-bold text-lg">Uplynx</span>
+              </div>
+              <p class="text-gray-600 text-sm">
+                AI-powered predictive maintenance and uptime intelligence for modern operations.
+              </p>
+            </div>
+            
+            <div>
+              <h4 class="font-semibold text-gray-900 mb-4">Product</h4>
+              <ul class="space-y-2 text-sm text-gray-600">
+                <li><a href="#features" class="hover:text-indigo-600 transition-colors">Features</a></li>
+                <li><a href="#demo" class="hover:text-indigo-600 transition-colors">Demo</a></li>
+                <li><a href="#pricing" class="hover:text-indigo-600 transition-colors">Pricing</a></li>
+                <li><a href="#" class="hover:text-indigo-600 transition-colors">API</a></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h4 class="font-semibold text-gray-900 mb-4">Resources</h4>
+              <ul class="space-y-2 text-sm text-gray-600">
+                <li><a href="#" class="hover:text-indigo-600 transition-colors">Documentation</a></li>
+                <li><a href="#" class="hover:text-indigo-600 transition-colors">Case Studies</a></li>
+                <li><a href="#" class="hover:text-indigo-600 transition-colors">Blog</a></li>
+                <li><a href="#" class="hover:text-indigo-600 transition-colors">Support</a></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h4 class="font-semibold text-gray-900 mb-4">Company</h4>
+              <ul class="space-y-2 text-sm text-gray-600">
+                <li><a href="#" class="hover:text-indigo-600 transition-colors">About</a></li>
+                <li><a href="#" class="hover:text-indigo-600 transition-colors">Careers</a></li>
+                <li><a href="#" class="hover:text-indigo-600 transition-colors">Contact</a></li>
+                <li><a href="#" class="hover:text-indigo-600 transition-colors">Privacy</a></li>
+              </ul>
+            </div>
+          </div>
+          
+          <div class="pt-8 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center">
+            <div class="text-sm text-gray-600 mb-4 md:mb-0">
+              © <script>document.write(new Date().getFullYear())</script> Uplynx — Predictive Maintenance Platform
+            </div>
+            <div class="flex gap-6">
+              <a href="#" class="text-gray-400 hover:text-indigo-600 transition-colors">
+                <i class="fab fa-twitter"></i>
+              </a>
+              <a href="#" class="text-gray-400 hover:text-indigo-600 transition-colors">
+                <i class="fab fa-linkedin"></i>
+              </a>
+              <a href="#" class="text-gray-400 hover:text-indigo-600 transition-colors">
+                <i class="fab fa-github"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </main>
+
+    <script>
+      // Modal functions
+      function openLoginModal() {
+        document.getElementById('loginModal').style.display = 'block';
+        document.body.style.overflow = 'hidden';
+      }
+
+      function closeLoginModal() {
+        document.getElementById('loginModal').style.display = 'none';
+        document.body.style.overflow = 'auto';
+      }
+
+      // Close modal when clicking outside
+      window.onclick = function(event) {
+        const modal = document.getElementById('loginModal');
+        if (event.target === modal) {
+          closeLoginModal();
+        }
+      }
+
+      // Mobile menu toggle
+      function toggleMobileMenu() {
+        const menu = document.getElementById('mobileMenu');
+        menu.classList.toggle('hidden');
+      }
+
+      // Login form handling
+      document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const loginButton = this.querySelector('button[type="submit"]');
+        const loadingSpinner = document.getElementById('loginLoading');
+        
+        // Show loading state
+        loginButton.disabled = true;
+        loadingSpinner.classList.remove('hidden');
+        
+        try {
+          const response = await fetch('/login', {
+            method: 'POST',
+            body: formData
+          });
+          
+          const data = await response.json();
+          
+          if (data.success) {
+            showNotification('Login successful! Redirecting...', 'success');
+            setTimeout(() => {
+              window.location.href = data.redirect;
+            }, 1000);
+          } else {
+            showNotification(data.message, 'error');
+          }
+        } catch (error) {
+          showNotification('Login failed. Please try again.', 'error');
+        } finally {
+          loginButton.disabled = false;
+          loadingSpinner.classList.add('hidden');
+        }
+      });
+
+      // Show notification function
+      function showNotification(message, type) {
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.innerHTML = `
+          <i class="fas fa-${type === 'success' ? 'check' : 'exclamation-triangle'}"></i>
+          ${message}
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+          notification.remove();
+        }, 5000);
+      }
+
+      // Demo form submission handler
+      document.getElementById('demoForm')?.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Show success message
+        const button = this.querySelector('button[type="submit"]');
+        const originalText = button.innerHTML;
+        
+        button.innerHTML = '<i class="fas fa-check mr-2"></i>Request Sent!';
+        button.classList.remove('gradient-bg');
+        button.classList.add('bg-green-500');
+        button.disabled = true;
+        
+        showNotification('Demo request received! We\'ll contact you soon.', 'success');
+        
+        // Reset form
+        setTimeout(() => {
+          this.reset();
+          button.innerHTML = originalText;
+          button.classList.remove('bg-green-500');
+          button.classList.add('gradient-bg');
+          button.disabled = false;
+        }, 3000);
+      });
+
+      // Smooth scrolling for anchor links
+      document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute('href'));
+          if (target) {
+            target.scrollIntoView({
+              behavior: 'smooth',
+              block: 'start'
+            });
+          }
+        });
+      });
+
+      // Close mobile menu when clicking on a link
+      document.querySelectorAll('#mobileMenu a').forEach(link => {
+        link.addEventListener('click', () => {
+          document.getElementById('mobileMenu').classList.add('hidden');
+        });
+      });
+    </script>
+  </body>
+</html>

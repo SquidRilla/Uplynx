@@ -1,0 +1,713 @@
+<!-- templates/ai_insights.html -->
+{% extends "base.html" %}
+
+{% block title %}AI Insights & Reports{% endblock %}
+
+{% block content %}
+<div class="ai-insights">
+    <!-- Report Header -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-robot"></i>
+                AI-Powered Predictive Analytics
+            </h3>
+            <div class="report-actions">
+                <button class="btn btn-primary" onclick="generateComprehensiveReport()">
+                    <i class="fas fa-sync-alt"></i>
+                    Generate New Report
+                </button>
+                <button class="btn btn-success" onclick="downloadReport()">
+                    <i class="fas fa-download"></i>
+                    Download PDF
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="report-metadata" id="reportMetadata">
+                <p>Click "Generate New Report" to get AI-powered insights</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Executive Summary -->
+    <div class="card mb-4" id="executiveSummarySection" style="display: none;">
+        <div class="card-header">
+            <h3 class="card-title">Executive Summary</h3>
+            <span class="badge badge-success" id="overallStatus">ANALYSIS PENDING</span>
+        </div>
+        <div class="card-body">
+            <div class="executive-metrics grid grid-4">
+                <div class="metric-card">
+                    <div class="metric-value" id="overallHealth">--%</div>
+                    <div class="metric-label">System Health</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="componentsAtRisk">--</div>
+                    <div class="metric-label">Components at Risk</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="estimatedSavings">--</div>
+                    <div class="metric-label">Est. Annual Savings</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="systemStatus">--</div>
+                    <div class="metric-label">System Status</div>
+                </div>
+            </div>
+            
+            <div class="summary-content mt-4">
+                <div class="achievements">
+                    <h4>Key Achievements</h4>
+                    <div id="keyAchievements">
+                        <p class="text-muted">Generate report to see achievements</p>
+                    </div>
+                </div>
+                <div class="improvements">
+                    <h4>Areas for Improvement</h4>
+                    <div id="areasForImprovement">
+                        <p class="text-muted">Generate report to see recommendations</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-2 gap-4">
+        <!-- System Analysis -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">System Health Analysis</h3>
+                <button class="btn btn-secondary btn-sm" onclick="refreshSystemAnalysis()">
+                    <i class="fas fa-refresh"></i>
+                </button>
+            </div>
+            <div class="card-body">
+                <div id="systemAnalysisContent">
+                    <div class="loading-placeholder">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Loading system analysis...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Component Analysis -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Component Risk Analysis</h3>
+                <select id="componentSelect" onchange="loadComponentAnalysis()">
+                    <option value="solar_panels">Solar Panels</option>
+                    <option value="batteries">Batteries</option>
+                    <option value="generators">Generators</option>
+                </select>
+            </div>
+            <div class="card-body">
+                <div id="componentAnalysisContent">
+                    <div class="loading-placeholder">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Select a component to view analysis</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Insights & Recommendations -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h3 class="card-title">AI Insights & Recommendations</h3>
+        </div>
+        <div class="card-body">
+            <div class="grid grid-2">
+                <!-- Insights -->
+                <div class="insights-section">
+                    <h4><i class="fas fa-lightbulb"></i> Key Insights</h4>
+                    <div id="aiInsightsList">
+                        <p class="text-muted">Generate report to see AI insights</p>
+                    </div>
+                </div>
+                
+                <!-- Recommendations -->
+                <div class="recommendations-section">
+                    <h4><i class="fas fa-tasks"></i> Actionable Recommendations</h4>
+                    <div id="aiRecommendationsList">
+                        <p class="text-muted">Generate report to see recommendations</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Maintenance Optimization -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h3 class="card-title">Maintenance Optimization</h3>
+            <button class="btn btn-info btn-sm" onclick="loadMaintenanceAnalysis()">
+                <i class="fas fa-chart-line"></i>
+                Analyze Patterns
+            </button>
+        </div>
+        <div class="card-body">
+            <div id="maintenanceAnalysisContent">
+                <div class="loading-placeholder">
+                    <p>Click "Analyze Patterns" to view maintenance optimization opportunities</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ROI Analysis -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h3 class="card-title">ROI & Business Impact</h3>
+        </div>
+        <div class="card-body">
+            <div class="grid grid-4" id="roiMetrics">
+                <div class="metric-card">
+                    <div class="metric-value">--</div>
+                    <div class="metric-label">Est. Annual Savings</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">--%</div>
+                    <div class="metric-label">Uptime Improvement</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">--%</div>
+                    <div class="metric-label">Cost Reduction</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">--</div>
+                    <div class="metric-label">ROI Period</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Global variables
+let currentReport = null;
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    loadSystemAnalysis();
+    loadComponentAnalysis();
+});
+
+// Generate comprehensive AI report
+async function generateComprehensiveReport() {
+    const button = event.target;
+    const originalText = button.innerHTML;
+    
+    try {
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+        button.disabled = true;
+
+        const response = await fetch('/api/ai_reports/comprehensive');
+        const report = await response.json();
+        
+        if (report.error) {
+            throw new Error(report.error);
+        }
+        
+        currentReport = report;
+        displayComprehensiveReport(report);
+        
+        button.innerHTML = originalText;
+        button.disabled = false;
+        
+        showNotification('AI report generated successfully!', 'success');
+        
+    } catch (error) {
+        console.error('Error generating report:', error);
+        button.innerHTML = originalText;
+        button.disabled = false;
+        showNotification('Error generating report: ' + error.message, 'error');
+    }
+}
+
+// Display comprehensive report
+function displayComprehensiveReport(report) {
+    // Update executive summary
+    displayExecutiveSummary(report.executive_summary);
+    
+    // Update system analysis
+    displaySystemAnalysis(report.system_analysis);
+    
+    // Update ROI metrics
+    displayROIMetrics(report.roi_metrics);
+    
+    // Update report metadata
+    document.getElementById('reportMetadata').innerHTML = `
+        <div class="report-info">
+            <strong>Report ID:</strong> ${report.report_id} | 
+            <strong>Generated:</strong> ${new Date(report.report_generated).toLocaleString()} |
+            <strong>Period:</strong> ${report.report_period} |
+            <strong>AI Model:</strong> ${report.ai_model_version}
+        </div>
+    `;
+}
+
+// Display executive summary
+function displayExecutiveSummary(summary) {
+    document.getElementById('executiveSummarySection').style.display = 'block';
+    document.getElementById('overallHealth').textContent = `${summary.overall_health}%`;
+    document.getElementById('componentsAtRisk').textContent = summary.components_at_risk;
+    document.getElementById('estimatedSavings').textContent = summary.estimated_savings;
+    document.getElementById('systemStatus').textContent = summary.system_status;
+    document.getElementById('overallStatus').textContent = summary.system_status.toUpperCase();
+    
+    // Update achievements
+    document.getElementById('keyAchievements').innerHTML = summary.key_achievements.length > 0 ? 
+        summary.key_achievements.map(achievement => `<div class="achievement-item">✅ ${achievement}</div>`).join('') :
+        '<p class="text-muted">No specific achievements to report</p>';
+    
+    // Update improvements
+    document.getElementById('areasForImprovement').innerHTML = summary.areas_for_improvement.length > 0 ? 
+        summary.areas_for_improvement.map(improvement => `<div class="improvement-item">🔧 ${improvement}</div>`).join('') :
+        '<p class="text-muted">No major improvements needed</p>';
+}
+
+// Display system analysis
+function displaySystemAnalysis(systemAnalysis) {
+    const insights = systemAnalysis.system_insights || [];
+    const recommendations = systemAnalysis.system_recommendations || [];
+    
+    // Update system analysis content
+    document.getElementById('systemAnalysisContent').innerHTML = `
+        <div class="system-metrics">
+            <div class="metric-row">
+                <span class="metric-label">Overall System Health:</span>
+                <span class="metric-value">${systemAnalysis.system_metrics.avg_system_health}%</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">System Risk Score:</span>
+                <span class="metric-value ${systemAnalysis.system_metrics.system_risk_score > 50 ? 'text-danger' : 'text-success'}">
+                    ${systemAnalysis.system_metrics.system_risk_score}/100
+                </span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Components at Risk:</span>
+                <span class="metric-value">${systemAnalysis.system_metrics.components_at_risk}</span>
+            </div>
+        </div>
+    `;
+    
+    // Update AI insights
+    document.getElementById('aiInsightsList').innerHTML = insights.length > 0 ? 
+        insights.map(insight => `<div class="insight-item">${insight}</div>`).join('') :
+        '<p class="text-muted">No insights available</p>';
+    
+    // Update recommendations
+    document.getElementById('aiRecommendationsList').innerHTML = recommendations.length > 0 ? 
+        recommendations.map(rec => `<div class="recommendation-item">${rec}</div>`).join('') :
+        '<p class="text-muted">No recommendations available</p>';
+}
+
+// Display ROI metrics
+function displayROIMetrics(roiMetrics) {
+    document.getElementById('roiMetrics').innerHTML = `
+        <div class="metric-card">
+            <div class="metric-value">$${roiMetrics.estimated_annual_savings.toLocaleString()}</div>
+            <div class="metric-label">Est. Annual Savings</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-value">${roiMetrics.system_uptime_improvement}</div>
+            <div class="metric-label">Uptime Improvement</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-value">${roiMetrics.maintenance_cost_reduction}</div>
+            <div class="metric-label">Cost Reduction</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-value">${roiMetrics.roi_period}</div>
+            <div class="metric-label">ROI Period</div>
+        </div>
+    `;
+}
+
+// Load system analysis
+async function loadSystemAnalysis() {
+    try {
+        const response = await fetch('/api/ai_reports/system_analysis');
+        const analysis = await response.json();
+        
+        if (analysis.error) {
+            throw new Error(analysis.error);
+        }
+        
+        displaySystemAnalysis(analysis);
+    } catch (error) {
+        console.error('Error loading system analysis:', error);
+        document.getElementById('systemAnalysisContent').innerHTML = `
+            <div class="error-message">
+                <i class="fas fa-exclamation-triangle"></i>
+                Error loading system analysis: ${error.message}
+            </div>
+        `;
+    }
+}
+
+// Load component analysis
+async function loadComponentAnalysis() {
+    const component = document.getElementById('componentSelect').value;
+    
+    try {
+        const response = await fetch(`/api/ai_reports/component_analysis/${component}`);
+        const analysis = await response.json();
+        
+        if (analysis.error) {
+            throw new Error(analysis.error);
+        }
+        
+        displayComponentAnalysis(analysis);
+    } catch (error) {
+        console.error('Error loading component analysis:', error);
+        document.getElementById('componentAnalysisContent').innerHTML = `
+            <div class="error-message">
+                <i class="fas fa-exclamation-triangle"></i>
+                Error loading component analysis: ${error.message}
+            </div>
+        `;
+    }
+}
+
+// Display component analysis
+function displayComponentAnalysis(analysis) {
+    const riskColor = {
+        'critical': 'danger',
+        'high': 'warning',
+        'medium': 'info',
+        'low': 'success',
+        'very_low': 'secondary'
+    }[analysis.risk_level] || 'secondary';
+    
+    document.getElementById('componentAnalysisContent').innerHTML = `
+        <div class="component-analysis">
+            <div class="component-header">
+                <h4>${analysis.component.replace('_', ' ').toUpperCase()}</h4>
+                <span class="badge badge-${riskColor}">${analysis.risk_level.toUpperCase()} RISK</span>
+            </div>
+            
+            <div class="component-metrics grid grid-3">
+                <div class="metric">
+                    <div class="metric-value">${analysis.current_health}%</div>
+                    <div class="metric-label">Health Score</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">${analysis.current_rul} days</div>
+                    <div class="metric-label">Remaining Life</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value ${analysis.health_trend < 0 ? 'text-danger' : 'text-success'}">
+                        ${analysis.health_trend > 0 ? '+' : ''}${analysis.health_trend}%
+                    </div>
+                    <div class="metric-label">Health Trend</div>
+                </div>
+            </div>
+            
+            <div class="risk-score">
+                <strong>Risk Score:</strong> 
+                <span class="risk-value risk-${riskColor}">${analysis.risk_score}/100</span>
+            </div>
+            
+            <div class="insights-list">
+                <h5>AI Insights:</h5>
+                ${analysis.insights.map(insight => `<div class="insight-item">${insight}</div>`).join('')}
+            </div>
+        </div>
+    `;
+}
+
+// Load maintenance analysis
+async function loadMaintenanceAnalysis() {
+    try {
+        const response = await fetch('/api/ai_reports/maintenance_analysis');
+        const analysis = await response.json();
+        
+        if (analysis.error) {
+            throw new Error(analysis.error);
+        }
+        
+        displayMaintenanceAnalysis(analysis);
+    } catch (error) {
+        console.error('Error loading maintenance analysis:', error);
+        showNotification('Error loading maintenance analysis: ' + error.message, 'error');
+    }
+}
+
+// Display maintenance analysis
+function displayMaintenanceAnalysis(analysis) {
+    document.getElementById('maintenanceAnalysisContent').innerHTML = `
+        <div class="maintenance-analysis">
+            <div class="maintenance-stats grid grid-3">
+                <div class="stat-card">
+                    <div class="stat-value">${analysis.total_maintenance_events || 0}</div>
+                    <div class="stat-label">Total Events</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${analysis.maintenance_analysis?.preventive_maintenance || 0}</div>
+                    <div class="stat-label">Preventive</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${analysis.maintenance_analysis?.corrective_maintenance || 0}</div>
+                    <div class="stat-label">Corrective</div>
+                </div>
+            </div>
+            
+            ${analysis.optimization_opportunities ? `
+            <div class="optimization-opportunities">
+                <h5>Optimization Opportunities:</h5>
+                ${analysis.optimization_opportunities.map(opp => `<div class="opportunity-item">💡 ${opp}</div>`).join('')}
+            </div>
+            ` : ''}
+        </div>
+    `;
+}
+
+// Refresh system analysis
+function refreshSystemAnalysis() {
+    loadSystemAnalysis();
+    showNotification('System analysis refreshed', 'success');
+}
+
+// Download report as PDF (simulated)
+function downloadReport() {
+    if (!currentReport) {
+        showNotification('Please generate a report first', 'warning');
+        return;
+    }
+    
+    // In a real application, this would generate a PDF
+    showNotification('PDF report download started...', 'info');
+    
+    // Simulate PDF generation
+    setTimeout(() => {
+        showNotification('Report downloaded successfully!', 'success');
+    }, 2000);
+}
+
+// Utility function to show notifications
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} notification-toast`;
+    notification.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation-triangle' : 'info'}-circle"></i>
+        ${message}
+        <button class="notification-close" onclick="this.parentElement.remove()">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 10000;
+        min-width: 300px;
+        animation: slideInRight 0.3s ease;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.remove();
+        }
+    }, 5000);
+}
+</script>
+
+<style>
+/* AI Insights Specific Styles */
+.report-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.executive-metrics {
+    margin-bottom: 1.5rem;
+}
+
+.metric-card {
+    text-align: center;
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 0.75rem;
+    border: 1px solid #e2e8f0;
+}
+
+.metric-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.metric-label {
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+.summary-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+.achievement-item, .improvement-item {
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    background: #f8fafc;
+    border-radius: 0.5rem;
+    border-left: 4px solid #10b981;
+}
+
+.improvement-item {
+    border-left-color: #f59e0b;
+}
+
+.system-metrics {
+    margin-bottom: 1rem;
+}
+
+.metric-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.component-analysis {
+    padding: 1rem 0;
+}
+
+.component-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.risk-score {
+    margin: 1rem 0;
+    padding: 0.75rem;
+    background: #f8fafc;
+    border-radius: 0.5rem;
+}
+
+.risk-value {
+    font-weight: 700;
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.9rem;
+}
+
+.risk-danger { background: #fef2f2; color: #dc2626; }
+.risk-warning { background: #fffbeb; color: #d97706; }
+.risk-success { background: #dcfce7; color: #166534; }
+.risk-info { background: #eff6ff; color: #2563eb; }
+.risk-secondary { background: #f8fafc; color: #64748b; }
+
+.insight-item, .recommendation-item {
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    background: #f8fafc;
+    border-radius: 0.5rem;
+    border-left: 4px solid #3b82f6;
+}
+
+.recommendation-item {
+    border-left-color: #10b981;
+}
+
+.insights-list, .optimization-opportunities {
+    margin-top: 1rem;
+}
+
+.opportunity-item {
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    background: #f0f9ff;
+    border-radius: 0.5rem;
+    border-left: 4px solid #0ea5e9;
+}
+
+.maintenance-stats {
+    margin-bottom: 1.5rem;
+}
+
+.stat-card {
+    text-align: center;
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 0.75rem;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.stat-label {
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+.loading-placeholder {
+    text-align: center;
+    padding: 2rem;
+    color: #64748b;
+}
+
+.error-message {
+    padding: 1rem;
+    background: #fef2f2;
+    border-radius: 0.5rem;
+    color: #dc2626;
+    border-left: 4px solid #dc2626;
+}
+
+.notification-toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    min-width: 300px;
+    animation: slideInRight 0.3s ease;
+}
+
+.notification-close {
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    margin-left: auto;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.text-danger { color: #dc2626; }
+.text-success { color: #16a34a; }
+.text-warning { color: #d97706; }
+
+.badge-danger { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+.badge-success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+.badge-warning { background: #fffbeb; color: #d97706; border: 1px solid #fed7aa; }
+.badge-info { background: #eff6ff; color: #2563eb; border: 1px solid #dbeafe; }
+.badge-secondary { background: #f8fafc; color: #64748b; border: 1px solid #e2e8f0; }
+</style>
+{% endblock %}

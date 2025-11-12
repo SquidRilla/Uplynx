@@ -1,0 +1,353 @@
+<!-- templates/reports.html -->
+{% extends "base.html" %}
+
+{% block title %}Reports & Analytics{% endblock %}
+
+{% block content %}
+<div class="reports">
+    <!-- Report Header -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3 class="card-title">Predictive Maintenance Analytics</h3>
+            <div class="report-actions">
+                <button class="btn btn-primary" onclick="generateReport()">
+                    <i class="fas fa-download"></i>
+                    Generate Report
+                </button>
+                <button class="btn btn-secondary" onclick="refreshAnalytics()">
+                    <i class="fas fa-sync-alt"></i>
+                    Refresh Data
+                </button>
+            </div>
+        </div>
+        <div class="report-summary">
+            <div class="summary-item">
+                <span class="summary-label">System Uptime</span>
+                <span class="summary-value">99.8%</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Predictive Accuracy</span>
+                <span class="summary-value">94.5%</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Cost Savings</span>
+                <span class="summary-value">$42.5K</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">MTBF</span>
+                <span class="summary-value">1,250 hrs</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-2 gap-4">
+        <!-- Performance Metrics -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Model Performance</h3>
+                <select id="componentSelect" onchange="loadComponentInsights()">
+                    <option value="solar_panels">Solar Panels</option>
+                    <option value="batteries">Batteries</option>
+                    <option value="generators">Generators</option>
+                </select>
+            </div>
+            <div id="performanceMetrics">
+                <!-- Performance metrics will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Feature Importance -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Feature Importance</h3>
+            </div>
+            <div class="chart-container">
+                <canvas id="featureImportanceReport"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Historical Trends -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h3 class="card-title">Historical Health Trends</h3>
+            <select id="trendComponentSelect" onchange="loadHistoricalTrends()">
+                <option value="solar_panels">Solar Panels</option>
+                <option value="batteries">Batteries</option>
+                <option value="generators">Generators</option>
+            </select>
+        </div>
+        <div class="chart-container">
+            <canvas id="historicalTrendChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Alert Analysis -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h3 class="card-title">Alert Analysis</h3>
+        </div>
+        <div class="grid grid-2">
+            <div class="chart-container">
+                <canvas id="alertDistributionChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="componentAlertChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Maintenance Analytics -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h3 class="card-title">Maintenance Analytics</h3>
+        </div>
+        <div class="grid grid-3">
+            <div class="metric-card">
+                <div class="metric-value">87%</div>
+                <div class="metric-label">Planned Maintenance</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">13%</div>
+                <div class="metric-label">Emergency Repairs</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">42%</div>
+                <div class="metric-label">Cost Reduction</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentComponent = 'solar_panels';
+
+// Initialize reports
+document.addEventListener('DOMContentLoaded', function() {
+    loadComponentInsights();
+    loadHistoricalTrends();
+    createAlertCharts();
+});
+
+async function loadComponentInsights() {
+    const component = document.getElementById('componentSelect').value;
+    currentComponent = component;
+    
+    try {
+        const response = await fetch(`/api/ml_insights/${component}`);
+        const insights = await response.json();
+        
+        document.getElementById('performanceMetrics').innerHTML = `
+            <div class="metrics-grid">
+                <div class="metric">
+                    <span class="metric-label">R² Score</span>
+                    <span class="metric-value">${(insights.model_performance?.r2_score * 100 || 0).toFixed(1)}%</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">MAE</span>
+                    <span class="metric-value">${insights.model_performance?.mae?.toFixed(4) || 'N/A'}</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">RMSE</span>
+                    <span class="metric-value">${insights.model_performance?.rmse?.toFixed(4) || 'N/A'}</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Training Samples</span>
+                    <span class="metric-value">${insights.model_performance?.training_samples || 0}</span>
+                </div>
+            </div>
+            ${insights.model_performance ? `
+            <div class="model-info">
+                <p><strong>Model Type:</strong> ${insights.model_performance.model_type}</p>
+                <p><strong>Last Training:</strong> ${new Date().toLocaleDateString()}</p>
+            </div>
+            ` : ''}
+        `;
+        
+        // Update feature importance chart
+        if (insights.feature_importance) {
+            window.app.chartManager.createFeatureImportanceChart(
+                'featureImportanceReport',
+                insights.feature_importance
+            );
+        }
+    } catch (error) {
+        console.error('Failed to load component insights:', error);
+    }
+}
+
+async function loadHistoricalTrends() {
+    const component = document.getElementById('trendComponentSelect').value;
+    
+    try {
+        const response = await fetch(`/api/prediction_history/${component}`);
+        const history = await response.json();
+        
+        // Create sample data for demonstration
+        const sampleData = {
+            labels: Array.from({length: 30}, (_, i) => {
+                const date = new Date();
+                date.setDate(date.getDate() - (29 - i));
+                return date.toLocaleDateString();
+            }),
+            values: Array.from({length: 30}, () => Math.random() * 20 + 70) // 70-90 range
+        };
+        
+        window.app.chartManager.createTrendChart(
+            'historicalTrendChart',
+            sampleData
+        );
+    } catch (error) {
+        console.error('Failed to load historical trends:', error);
+    }
+}
+
+function createAlertCharts() {
+    // Alert distribution chart
+    const alertCtx = document.getElementById('alertDistributionChart').getContext('2d');
+    new Chart(alertCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Critical', 'High', 'Medium', 'Low'],
+            datasets: [{
+                data: [5, 12, 23, 8],
+                backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6', '#94a3b8']
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+    
+    // Component alert chart
+    const componentCtx = document.getElementById('componentAlertChart').getContext('2d');
+    new Chart(componentCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Solar Panels', 'Batteries', 'Generators'],
+            datasets: [{
+                label: 'Alerts',
+                data: [8, 15, 12],
+                backgroundColor: '#2563eb'
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+}
+
+function generateReport() {
+    alert('Generating comprehensive report... This would download a PDF in a real application.');
+}
+
+function refreshAnalytics() {
+    loadComponentInsights();
+    loadHistoricalTrends();
+    createAlertCharts();
+}
+</script>
+
+<style>
+.report-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.report-summary {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+    padding: 1.5rem 0;
+}
+
+.summary-item {
+    text-align: center;
+}
+
+.summary-label {
+    display: block;
+    color: var(--secondary);
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.summary-value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--dark);
+}
+
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.metric {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 0.75rem;
+}
+
+.metric-label {
+    color: var(--secondary);
+    font-weight: 500;
+}
+
+.metric-value {
+    font-weight: 700;
+    color: var(--dark);
+}
+
+.model-info {
+    padding-top: 1rem;
+    border-top: 1px solid var(--gray-light);
+}
+
+.model-info p {
+    margin-bottom: 0.5rem;
+}
+
+.metric-card {
+    text-align: center;
+    padding: 1.5rem;
+}
+
+.metric-card .metric-value {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.metric-card .metric-label {
+    color: var(--secondary);
+    font-size: 0.9rem;
+}
+
+select {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--gray-light);
+    border-radius: 0.5rem;
+    background: white;
+    color: var(--dark);
+}
+</style>
+{% endblock %}
