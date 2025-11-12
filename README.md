@@ -1,0 +1,27 @@
+# Web Framework & Server
+Flask==2.3.3
+Flask-SocketIO==5.3.6
+python-socketio==5.8.0
+eventlet==0.33.3
+Werkzeug==2.3.7
+Jinja2==3.1.2
+MarkupSafe==2.1.3
+itsdangerous==2.1.2
+click==8.1.7
+
+# Database
+psycopg2-binary==2.9.7
+SQLAlchemy==2.0.23
+
+# Machine Learning Core
+scikit-learn==1.3.2
+pandas==2.1.4
+numpy==1.25.2
+joblib==1.3.2
+
+# Data Visualization
+matplotlib==3.8.2
+seaborn==0.13.0
+
+# Environment & Configuration
+python-dotenv==1.0.0
